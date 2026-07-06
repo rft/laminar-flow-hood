@@ -3,7 +3,10 @@
 A parametric CAD model (build123d) of a horizontal-flow clean bench built from
 aluminium V-slot extrusion, plus the airflow sizing to make it actually work.
 
+<img src="docs/hood_preview.png" alt="Rendered hood assembly: V-slot frame with translucent work-zone walls, dark deck, and the HEPA filter / plenum / blower stack on the back" width="600">
+
 See [`docs/laminar_flow.md`](docs/laminar_flow.md) for the design math.
+Regenerate the preview above with `uv run python docs/render_preview.py`.
 
 ## Run it
 
@@ -54,4 +57,4 @@ Outer envelope **550 × 405 × 460 mm**, filter opening **470 × 380 mm**,
 - LED lights
 - Internal power strip
 - USB ports
-- Linear rails for walls
+- Torque hinges 
