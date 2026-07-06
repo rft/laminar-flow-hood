@@ -2,7 +2,9 @@
 
 This document explains the airflow math behind the hood and how to size the
 filter and blower for **your** frame. The numbers in the worked examples come
-straight from `frame.py` (run `uv run python frame.py` to reprint them).
+straight from the model — run `uv run python -m hood` to reprint the spec
+sheet. The math itself lives in `hood/airflow.py`; the dimensions in
+`hood/config.py`.
 
 ---
 
@@ -27,16 +29,21 @@ cutting. The chosen assignment is *optimal* for two reasons:
 
 **Assembled outer envelope: `550 (W) × 405 (D) × 460 (H) mm`.**
 
-This is a **horizontal-flow** bench: the HEPA filter forms the back wall and
-blows a sheet of clean air horizontally toward the open front where you work.
+This is a **horizontal-flow** bench: the HEPA filter blows a sheet of clean air
+horizontally toward the open front where you work.
+
+The filter/plenum/blower stack is mounted **off the back of the frame** rather
+than inside it, so the whole `405 mm` interior is usable work space (the filter
+front sits flush with the back wall). Everything behind that hangs out the back:
 
 ```
-        550 mm (X, width)
-   ┌───────────────────────┐
-   │  HEPA filter (back)    │   air ──▶ ──▶ ──▶  open front (you)
-   │                        │
-   └───────────────────────┘
-        │ 405 mm (Y) │        <- flow depth
+   open work zone     back wall
+   ┌───────────────┐╎                                    (looking down, top view)
+   │               │╎ HEPA  │ plenum │ blower │ pre-filter    air ◀── ◀── into room
+   │   you work    │╎ filter│  gap   │ (fan)  │   pad
+   └───────────────┘╎                                    intake ──▶ ──▶ from behind
+    │  405 mm (Y)  │  70 mm    40 mm    90 mm     20 mm
+        interior        └──── sticks out behind frame ────┘
 ```
 
 ---
@@ -164,12 +171,14 @@ free-air CFM.
 Even flow needs even pressure behind the filter. Build a **sealed plenum**
 between the blower and the HEPA:
 
-- Enclose the back `~100 mm` of the frame (Y depth is 405 mm — leaving ~300 mm
-  of clean work depth) with sheet material (acrylic/PVC/coroplast) sealed to the
-  extrusion with foam gasket tape.
+- It is a separate `~40 mm`-deep box **bolted to the back of the frame**, not
+  carved out of the interior — that is what keeps the full 405 mm interior open
+  as work space. Make it from sheet material (acrylic/PVC/coroplast) with the
+  HEPA as its front wall, gasketed all round.
 - Blow **into** the plenum, not straight at the filter — let it pressurize the
   box so air exits the whole filter face uniformly. A diffuser plate or simply
-  aiming the blower off-axis helps avoid a hot jet in the middle.
+  aiming the blower off-axis helps avoid a hot jet in the middle. The shallower
+  the plenum, the more a diffuser matters.
 - Seal every seam. Any leak upstream of the filter is unfiltered air bypassing
   into the "clean" zone.
 
@@ -205,6 +214,25 @@ between the blower and the HEPA:
    improve the diffuser.
 6. Optional (see `readme.md`): LED strip, internal power strip, USB, and linear
    rails / panels for the side walls to reduce cross-drafts.
+
+---
+
+## 9. How this maps to the model
+
+Each physical part above is its own module, all driven by `hood/config.py`:
+
+| Part           | Module              | Builder          |
+|----------------|---------------------|------------------|
+| Extrusion box  | `hood/frame.py`     | `build_frame()`  |
+| HEPA filter    | `hood/filter.py`    | `build_filter()` |
+| Sealed plenum  | `hood/plenum.py`    | `build_plenum()` |
+| Blower         | `hood/blower.py`    | `build_blower()` |
+| Intake pre-filter | `hood/prefilter.py` | `build_prefilter()` |
+| Walls + deck   | `hood/panels.py`    | `build_walls()`  |
+| Sizing math    | `hood/airflow.py`   | `required_airflow()`, `reynolds()` |
+
+Change a dimension in `config.py` and every part and every number in this
+doc's tables moves with it. `uv run python -m hood` rebuilds and reprints.
 
 ---
 
